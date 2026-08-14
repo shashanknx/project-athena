@@ -25,7 +25,7 @@ All job data is mock. There is no live job API, no network lookup, no account.
 
 ## 1. Running it
 
-Deployed for testing: **https://shashanknx.github.io/career-thesis-tester/**
+Deployed for testing: **https://shashanknx.github.io/project-athena/**
 (rebuilt automatically on every push to `main`).
 
 To run locally, Node 20+ (built and tested on Node 26, npm 11).

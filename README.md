@@ -2,7 +2,7 @@
 
 A wireframe prototype of a career thesis-testing tool, built for user testing.
 
-**Live: https://shashanknx.github.io/career-thesis-tester/**
+**Live: https://shashanknx.github.io/project-athena/**
 
 You state a **thesis** — the kind of role and company you think you are targeting
 ("Marketing, Space, Denver") — and the tool tells you whether that thesis exists
