@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+
+/*
+ * Wireframe prototype: deliberately plain. Neutral slate for structure,
+ * one blue accent for MARKET hit rate, one amber accent for FIT hit rate.
+ * The two accents never mix — that separation is load-bearing, not decorative.
+ */
+
+html {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
