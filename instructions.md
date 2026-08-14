@@ -13,13 +13,22 @@ never combined:
 | **Market hit rate** | Does this thesis exist at all? | Computed from the dataset | Section 1, blue |
 | **Fit hit rate** | Of the jobs that exist, are any actually right? | The user, role by role | Section 2, amber |
 
+There are two ways in. **The map** is the primary view and the landing screen:
+browse everything that exists with no thesis required, then test any thesis
+inline without leaving the page. **The standalone tester** is secondary, reached
+from *Start from scratch*, for building a thesis that does not begin with a
+company you are already looking at.
+
 All job data is mock. There is no live job API, no network lookup, no account.
 
 ---
 
-## 1. Running it locally
+## 1. Running it
 
-Requires Node 20+ (built and tested on Node 26, npm 11).
+Deployed for testing: **https://shashanknx.github.io/career-thesis-tester/**
+(rebuilt automatically on every push to `main`).
+
+To run locally, Node 20+ (built and tested on Node 26, npm 11).
 
 ```bash
 npm install
@@ -48,11 +57,119 @@ npm run build
 
 ---
 
-## 2. Test scenarios
+## 2. The map (primary view)
 
-Every scenario is reachable by typing into the form. The **Load a test scenario**
-chips under the form fill the same fields and submit through the same code path —
-use them for speed, or type the inputs to test the form itself.
+The map is a read-only view of the same dataset the tester runs on. It does no
+matching, scores no thesis, and computes no hit rates — the numbers on it are
+plain totals. Its job is to let you look around with zero commitment until you
+notice something worth testing.
+
+**Browsing.** Companies are grouped by industry. Each card shows the name,
+industry, stage, city, a count of open roles, and a tag for every function that
+company hires for (derived from its roles).
+
+**Filters.** Two chip rows, industry and function. They apply live, with no
+submit button. Each row is counted against the *other* filter, which is what
+makes gaps visible: select **Robotics** and the function row immediately reads
+BizOps 8, Engineering 1, Marketing 1, Product 1, and zero for everything else.
+That is the map earning its place — robotics in this market hires operators, not
+marketers, and you can see it before forming any thesis.
+
+**Testing inline.** Every function tag is also a *test this* control. Click one
+and a panel expands in place, directly below that company, pre-loaded with that
+company's function, industry, and city. Inside the panel you get the full
+diagnostic: market hit rate, the relax-one-dimension bars, the branch prompt,
+fit screening role by role, and next steps with *Log this job*. Nothing
+navigates. The filters and every other company stay visible and clickable while
+a panel is open.
+
+Rules the panel follows:
+
+- **One at a time.** Opening a panel closes whichever one was open.
+- **Collapse, don't lose.** *Collapse ×* (or clicking the highlighted tag again)
+  returns the card to its plain state. Reopening that same company and function
+  restores everything you had screened.
+- **Relaxing stays inline.** *Try this* and *Re-run without "…"* inside a panel
+  re-run the diagnostic in the panel. You never leave the map.
+- **Filtered out, not lost.** If your filters hide the company whose panel is
+  open, the panel goes with it and a blue notice tells you so. Clear the filters
+  and it comes back, screening intact.
+
+**The standalone tester.** *Start from scratch* (top right of the map) opens the
+old form-driven tester for building a thesis from nothing — free-text fields,
+the stage dropdown, and the six scenario shortcuts. It behaves exactly as it
+always did, including resetting screening on each new search. It is no longer a
+primary nav item. *← Back to the map* returns you.
+
+**The tracker** is reachable from every view via the header button, and nothing
+— navigating, filtering, searching, collapsing a panel — ever clears it.
+
+---
+
+## 3. Walkthrough: map to tracker
+
+The primary flow, start to finish. Do not reload the page partway through.
+
+**Part A — browse, and notice a gap**
+
+1. Open the app. You land on the map: 40 companies, 81 open roles, grouped by
+   industry.
+2. Click the **Robotics** industry chip. The map narrows to 9 companies / 19
+   open roles.
+3. Look at the function row now. **BizOps 8**, Engineering 1, Marketing 1,
+   Product 1, everything else 0. Robotics companies in this market hire
+   operators almost exclusively. If you were planning a marketing move into
+   robotics, you have just learned something without typing a thesis.
+4. Click **Marketing** in the function row. One company survives — Basalt
+   Machines in Denver. That is the whole robotics marketing market.
+
+**Part B — test a thesis inline**
+
+5. Clear both filters (click the highlighted chips, or **All** on each row), then
+   click the **Biotech** industry chip.
+6. Find **Helix Bio** (Boston) and click its **Product** tag. A panel expands
+   directly beneath the card, headed *Testing Product · Biotech · Boston —
+   started from Helix Bio*. The rest of the map is still there.
+7. The panel's market hit rate reads **2 companies**. The relaxation bars show
+   dropping function → 3, dropping industry → 3, dropping geography → **6**.
+   Geography is the binding constraint.
+8. Click **Re-run without "Boston"** inside the panel. It re-runs in place — the
+   heading becomes *Product · Biotech · anywhere* and the market hit rate goes to
+   **6 companies / 6 roles**. You have not left the map.
+
+**Part C — screen for fit, still inline**
+
+9. Scroll within the results in the panel and click each role to read its
+   description. Five are unambiguous product management jobs. Pinewood Bio's
+   *Product Manager, Clinical Ops Tools* is project management wearing a product
+   title — mark that one a **Miss** and the other five **Hit**.
+10. The fit hit rate updates live to **83%**, and the prompt changes to *"Strong
+    fit — this thesis holds up."* A **Next steps** section appears inside the
+    panel with a mocked warm path for each hit.
+11. Click **Log this job** on *Product Manager, Platform · Helix Bio*. The button
+    becomes **Logged** and the header count becomes **Tracker (1)**.
+
+**Part D — collapse and keep browsing**
+
+12. Click **Collapse ×**. The Helix Bio card returns to its plain state and the
+    map is intact.
+13. Click a different company's tag — say **Calyx Therapeutics · Product**. A new
+    panel opens and the old one is gone; only one is ever open.
+14. Now click **Helix Bio · Product** again. The panel returns with your 83% and
+    all six roles still screened. Collapsing is not discarding.
+15. Open **Tracker (1)** from the header. Your job is listed with company, role,
+    a status dropdown, and the date. Set it to *warm intro sought*, then click
+    *← Back to the map* — everything is where you left it.
+
+---
+
+## 4. Test scenarios
+
+These six exercise the diagnostic's edge cases. Enter them in the **standalone
+tester** (*Start from scratch* on the map), since they need field combinations
+the map's one-click handoff does not produce. Every one is reachable by typing;
+the **Load a test scenario** chips under the form fill the same fields and submit
+through the same code path.
 
 Leave any field marked *(blank)* empty.
 
@@ -71,10 +188,12 @@ matches against city names in the dataset.
 
 ---
 
-## 3. End-to-end walkthrough
+## 5. Walkthrough: the standalone tester
 
-One continuous session, starting from a thesis that does not exist and ending
-with a job in the tracker. Do not reload the page partway through.
+The secondary flow, for a user who starts from a thesis rather than from a
+company. Open it with *Start from scratch* on the map. One continuous session,
+starting from a thesis that does not exist. Do not reload the page partway
+through.
 
 **Part A — a thesis that does not exist**
 
@@ -128,12 +247,13 @@ with a job in the tracker. Do not reload the page partway through.
 14. Click **Tracker (1)** in the header. The job is listed with company, role, a
     status dropdown (researching / warm intro sought / applied), and the date
     added. Change the status to *warm intro sought*.
-15. Go back to **Test a thesis**, run any other thesis, and return to the
-    tracker. Your entry is still there — running a new thesis does not wipe it.
+15. Click *← Back to the map*, then **Tracker** again. Your entry is still
+    there — navigating between the map, the tester, and the tracker never
+    clears it.
 
 ---
 
-## 4. QA checklist
+## 6. QA checklist
 
 Every item below was verified in the browser on the build in this repo. Tick them
 through yourself; the "verified" notes say what the expected result is.
@@ -175,10 +295,28 @@ through yourself; the "verified" notes say what the expected result is.
 - [ ] **10. No console errors.** *Verified in a fresh tab across all six
       scenarios, with every role expanded and toggled: no errors and no
       warnings.*
+- [ ] **11. The map handoff pre-fills all three dimensions, and matches typing
+      them.** Click any function tag on the map. *Verified: the panel loads that
+      company's function, industry, and city — e.g. Helix Bio's Product tag gives
+      Product · Biotech · Boston. Typing those same three fields into the
+      standalone tester produces an identical result: 2 companies, the same
+      relaxation bars (3 / 3 / 6), and the same branch prompt. The handoff is
+      the same code path, not a parallel one.*
+- [ ] **12. Panels behave: one at a time, non-blocking, and state survives
+      collapse.** *Verified: (a) opening a second panel closes the first — only
+      one `map-panel` is ever in the DOM; (b) the filters and every other company
+      stay interactive while a panel is open, and filtering mid-panel works, with
+      a notice shown if the filters hide the open panel's company; (c) screening
+      a role, switching to another company's panel, then reopening the first
+      restores the screened roles and fit rate exactly.*
+- [ ] **13. The tracker survives everything.** *Verified: a job logged from
+      inside a map panel appears in the tracker, and navigating between map,
+      tester, and tracker, or collapsing the panel it was logged from, leaves it
+      intact.*
 
 ---
 
-## 5. Known limitations and stubs
+## 7. Known limitations and stubs
 
 These are deliberate. Please do not file them as bugs.
 
@@ -199,10 +337,21 @@ These are deliberate. Please do not file them as bugs.
 **Design decisions worth probing in user testing**
 
 - **Logging a job is gated behind a high fit hit rate.** *Log this job* lives
-  only in the next steps panel, which unlocks at 60% fit or above. A user who
-  finds one great role inside an otherwise poor thesis currently cannot log it.
-  This follows the spec, but it is worth watching whether testers try to log
-  from the results list.
+  only in the next steps section, which unlocks at 60% fit or above — in the map
+  panel and the standalone tester alike. A user who finds one great role inside
+  an otherwise poor thesis currently cannot log it. This follows the spec, but it
+  is worth watching whether testers try to log from the results list.
+
+- **A map panel always starts with all three dimensions set**, including the
+  city, so most handoffs open on a low market hit rate and immediately suggest
+  relaxing geography. That is arguably the diagnostic working as intended — it
+  shows the user their implicit "this company's city" assumption — but testers
+  may read the first number as discouraging. Worth watching.
+
+- **Screening is scoped per panel.** Marking a role a hit under one company's
+  panel does not mark it under another panel that happens to return the same
+  role. Each panel is its own question. The standalone tester is separate again,
+  and still resets on every new search.
 - **Exploration mode suppresses the relaxation bars.** With fewer than two
   dimensions set there is nothing meaningful to relax — dropping your only
   constraint would return the entire market — so the diagnostic is replaced with
