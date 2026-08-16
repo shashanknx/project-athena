@@ -3,6 +3,7 @@ import MapView from './components/MapView.jsx'
 import ThesisForm from './components/ThesisForm.jsx'
 import ThesisAnalysis from './components/ThesisAnalysis.jsx'
 import Tracker from './components/Tracker.jsx'
+import IndustryHeatmap from './components/IndustryHeatmap.jsx'
 import { EMPTY_THESIS, isEmptyThesis } from './lib/search.js'
 import { STATUSES } from './lib/tracker.js'
 
@@ -166,17 +167,30 @@ export default function App() {
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setView('tracker')}
-            className={`rounded px-3 py-1.5 text-sm font-medium ${
-              view === 'tracker'
-                ? 'bg-slate-900 text-white'
-                : 'border border-slate-300 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            Tracker ({tracker.length})
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setView('heatmap')}
+              className={`rounded px-3 py-1.5 text-sm font-medium ${
+                view === 'heatmap'
+                  ? 'bg-slate-900 text-white'
+                  : 'border border-slate-300 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Heatmap
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('tracker')}
+              className={`rounded px-3 py-1.5 text-sm font-medium ${
+                view === 'tracker'
+                  ? 'bg-slate-900 text-white'
+                  : 'border border-slate-300 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Tracker ({tracker.length})
+            </button>
+          </div>
         </div>
       </header>
 
@@ -238,6 +252,8 @@ export default function App() {
             )}
           </>
         ) : null}
+
+        {view === 'heatmap' ? <IndustryHeatmap /> : null}
 
         {view === 'tracker' ? (
           <Tracker
