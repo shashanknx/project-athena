@@ -330,9 +330,13 @@ These are deliberate. Please do not file them as bugs.
   LinkedIn, or contact lookup exists.
 - **No authentication.** No accounts, no sign-in, no per-user state.
 - **No monetization.** No pricing, paywall, or payment UI anywhere.
-- **Nothing persists.** All state, including the tracker, is in React memory.
-  Reloading the page clears everything. The tracker survives running new
-  theses — that is the requirement — but not a refresh.
+- **Nothing persists, with one exception.** All state, including the tracker,
+  is in React memory and clears on refresh. The tracker survives running new
+  theses — that is the requirement — but not a refresh. The one exception is
+  the first-visit career survey (see below): whether it was completed or
+  skipped is written to `localStorage` so it does not reappear on every
+  reload. Survey *answers* are also cached there so "Edit my answers" has
+  something to prefill, but no other state is persisted anywhere.
 
 **Design decisions worth probing in user testing**
 
@@ -365,6 +369,32 @@ These are deliberate. Please do not file them as bugs.
 - **`screenerVerdict` in the data file is an answer key, not app logic.** The app
   never reads it; it exists so testers can check their own screening and so
   `npm run test:data` can assert the expected fit rates.
+
+**The career survey (For You)**
+
+- Shown once, on first visit, before the map — "Skip for now" is always
+  available and remembered, same as completing it. Revisit or redo it anytime
+  from the "For You" nav button.
+- Every survey option (the four industries, the nine functions) is drawn from
+  the same vocabulary the rest of the app already filters on, so a completed
+  survey can never point at an industry or function with zero roles in the
+  dataset. The *combination* the user picks can still be empty — that is
+  handled with an honest message, not a fake match.
+- **Skill and certification guidance is illustrative, not a per-listing
+  match.** No role has real skill or certification fields. `src/data/
+  careerGuidance.js` hand-authors typical skills per function and per degree
+  background, and flags overlap by simple string equality against a shared
+  vocabulary — the same authored-answer-key spirit as `screenerVerdict`, not
+  a claim about any specific job posting's actual requirements.
+- **Seniority ("Entry level" / "Mid-level" / "Manager / senior") is a title
+  keyword heuristic**, not a stored field — see `inferLevel()` in
+  `src/lib/recommend.js`. A role like "Product Manager" buckets into
+  "Manager / senior" by the word "Manager" even though PM is often an
+  individual-contributor title in practice. Worth watching whether testers
+  find that mislabeling.
+- **Age range is collected but never used to filter or recommend anything.**
+  It is on the survey because it was asked for; there is no legitimate basis
+  in this dataset to make age drive a career recommendation, so it does not.
 
 **Small things noticed and left alone**
 

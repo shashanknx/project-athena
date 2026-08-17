@@ -3,8 +3,42 @@ import MapView from './components/MapView.jsx'
 import ThesisForm from './components/ThesisForm.jsx'
 import ThesisAnalysis from './components/ThesisAnalysis.jsx'
 import Tracker from './components/Tracker.jsx'
+import OnboardingSurvey, { EMPTY_SURVEY } from './components/OnboardingSurvey.jsx'
+import CareerRecommendations from './components/CareerRecommendations.jsx'
 import { EMPTY_THESIS, isEmptyThesis } from './lib/search.js'
 import { STATUSES } from './lib/tracker.js'
+
+// The one exception to "nothing persists" — see instructions.md's "The
+// career survey" section. Guarded because localStorage can throw (private
+// browsing, disabled storage) and that should never break the app.
+const STATUS_KEY = 'thesisTester.surveyStatus'
+const ANSWERS_KEY = 'thesisTester.surveyAnswers'
+
+function readStoredStatus() {
+  try {
+    return localStorage.getItem(STATUS_KEY) ?? 'pending'
+  } catch {
+    return 'pending'
+  }
+}
+
+function readStoredAnswers() {
+  try {
+    const raw = localStorage.getItem(ANSWERS_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function writeStoredSurvey(status, answers) {
+  try {
+    localStorage.setItem(STATUS_KEY, status)
+    if (answers) localStorage.setItem(ANSWERS_KEY, JSON.stringify(answers))
+  } catch {
+    // Storage unavailable — the survey just re-prompts next visit, which is fine.
+  }
+}
 
 /**
  * Three views. The map is primary and the landing view; the standalone tester
@@ -17,7 +51,11 @@ import { STATUSES } from './lib/tracker.js'
  * older behaviour — a new search there is a fresh question, so it resets.
  */
 export default function App() {
-  const [view, setView] = useState('map')
+  // --- career survey state ---------------------------------------------------
+  const [surveyStatus, setSurveyStatus] = useState(readStoredStatus)
+  const [surveyAnswers, setSurveyAnswers] = useState(() => readStoredAnswers() ?? EMPTY_SURVEY)
+
+  const [view, setView] = useState(surveyStatus === 'pending' ? 'survey' : 'map')
 
   // Tracker sits above everything: no navigation or search clears it.
   const [tracker, setTracker] = useState([])
@@ -140,6 +178,19 @@ export default function App() {
 
   const isLogged = (roleId) => tracker.some((e) => e.roleId === roleId)
 
+  function submitSurvey(answers) {
+    setSurveyAnswers(answers)
+    setSurveyStatus('completed')
+    writeStoredSurvey('completed', answers)
+    setView('recommendations')
+  }
+
+  function skipSurvey() {
+    setSurveyStatus('skipped')
+    writeStoredSurvey('skipped', null)
+    setView('map')
+  }
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white">
@@ -166,21 +217,42 @@ export default function App() {
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setView('tracker')}
-            className={`rounded px-3 py-1.5 text-sm font-medium ${
-              view === 'tracker'
-                ? 'bg-slate-900 text-white'
-                : 'border border-slate-300 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            Tracker ({tracker.length})
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setView(surveyStatus === 'completed' ? 'recommendations' : 'survey')}
+              className={`rounded px-3 py-1.5 text-sm font-medium ${
+                view === 'survey' || view === 'recommendations'
+                  ? 'bg-slate-900 text-white'
+                  : 'border border-slate-300 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              For You
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('tracker')}
+              className={`rounded px-3 py-1.5 text-sm font-medium ${
+                view === 'tracker'
+                  ? 'bg-slate-900 text-white'
+                  : 'border border-slate-300 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Tracker ({tracker.length})
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl space-y-6 px-6 py-6">
+        {view === 'survey' ? (
+          <OnboardingSurvey initial={surveyAnswers} onSubmit={submitSurvey} onSkip={skipSurvey} />
+        ) : null}
+
+        {view === 'recommendations' ? (
+          <CareerRecommendations answers={surveyAnswers} onEdit={() => setView('survey')} />
+        ) : null}
+
         {view === 'map' ? (
           <MapView
             filters={filters}
@@ -252,7 +324,8 @@ export default function App() {
 
       <footer className="mx-auto max-w-5xl px-6 pb-10 text-xs text-slate-400">
         Prototype for user testing. Job data is generated, warm paths are stubbed, and there is no
-        account, persistence, or payment layer. See instructions.md.
+        account or payment layer. The career survey's answers are the one thing saved between
+        visits. See instructions.md.
       </footer>
     </div>
   )
