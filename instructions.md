@@ -382,10 +382,25 @@ These are deliberate. Please do not file them as bugs.
   handled with an honest message, not a fake match.
 - **Skill and certification guidance is illustrative, not a per-listing
   match.** No role has real skill or certification fields. `src/data/
-  careerGuidance.js` hand-authors typical skills per function and per degree
-  background, and flags overlap by simple string equality against a shared
-  vocabulary — the same authored-answer-key spirit as `screenerVerdict`, not
-  a claim about any specific job posting's actual requirements.
+  careerGuidance.js` hand-authors typical skills per function, per degree
+  background, per experience type, and per past role, and `skillProfile()`
+  in `src/lib/recommend.js` unions all of them plus whatever the user typed
+  into the free-text skills box — the same authored-answer-key spirit as
+  `screenerVerdict`, not a claim about any specific job posting's actual
+  requirements.
+- **Degree background, work experience, past roles, and past industries are
+  all checkbox lists, not single-select** — a person can hold more than one
+  degree or have done both an internship and part-time work. "Other" next to
+  degree background opens a free-text field; that text is stored and shown
+  back to the user, but (honestly) contributes no inferred skills, since
+  there's no reliable way to map arbitrary free text to the skill vocabulary.
+- **The free-text skills box matches against a small hand-authored synonym
+  list** (`SKILL_KEYWORD_SYNONYMS` in `careerGuidance.js`), so typing
+  "Python" or "Excel" credits the right canonical skill tag even though
+  those words don't literally appear in it. Anything typed that isn't in the
+  synonym list, or doesn't loosely match a tag's own words, is still saved
+  and shown back to the user — it just doesn't move any skill from "worth
+  developing" to "already have."
 - **Seniority ("Entry level" / "Mid-level" / "Manager / senior") is a title
   keyword heuristic**, not a stored field — see `inferLevel()` in
   `src/lib/recommend.js`. A role like "Product Manager" buckets into

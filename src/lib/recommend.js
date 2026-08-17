@@ -1,5 +1,11 @@
 import { COMPANIES } from '../data/mockCompanies.js'
-import { DEGREE_SKILLS, EXPERIENCE_SKILLS, FUNCTION_SKILLS, FUNCTION_CERTIFICATIONS } from '../data/careerGuidance.js'
+import {
+  DEGREE_SKILLS,
+  EXPERIENCE_TYPE_SKILLS,
+  FUNCTION_SKILLS,
+  FUNCTION_CERTIFICATIONS,
+  SKILL_KEYWORD_SYNONYMS,
+} from '../data/careerGuidance.js'
 
 /*
  * Career-survey recommendation logic. Separate from lib/map.js and
@@ -46,16 +52,41 @@ export function groupRecommendationsByIndustry(recommended) {
 }
 
 /**
- * Matched vs. to-develop skills for one function, given a survey-taker's
- * degree background and experience. Overlap is plain string equality against
- * the shared vocabulary in careerGuidance.js.
+ * Does a free-typed keyword count as evidence for this canonical skill tag?
+ * Checked against the hand-authored synonym list first (so "python" counts
+ * toward "coding / technical scripting"), then falls back to a loose
+ * substring match against the tag's own words. Short keywords (<3 chars)
+ * never match — too easy to collide by accident.
  */
-export function skillProfile({ degree, experience }, func) {
-  const have = new Set([...(DEGREE_SKILLS[degree] ?? []), ...(EXPERIENCE_SKILLS[experience] ?? [])])
+function skillKeywordMatches(skillTag, keywords) {
+  const synonyms = SKILL_KEYWORD_SYNONYMS[skillTag] ?? []
+  const tagWords = skillTag.toLowerCase().split(/[^a-z0-9+]+/).filter(Boolean)
+  return keywords.some((raw) => {
+    const kw = raw.trim().toLowerCase()
+    if (kw.length < 3) return false
+    if (synonyms.some((s) => s === kw || s.includes(kw) || kw.includes(s))) return true
+    return tagWords.some((w) => w === kw || w.includes(kw) || kw.includes(w))
+  })
+}
+
+/**
+ * Matched vs. to-develop skills for one function, given everything the
+ * survey collected: degrees (multi), experience types (multi), past roles
+ * actually worked in, and free-typed skill keywords. Union of all sources —
+ * a survey-taker gets credit for a skill from any one of them.
+ */
+export function skillProfile(answers, func) {
+  const { degrees = [], experienceTypes = [], pastRoles = [], skillKeywords = [] } = answers
+  const have = new Set([
+    ...degrees.flatMap((d) => DEGREE_SKILLS[d] ?? []),
+    ...experienceTypes.flatMap((t) => EXPERIENCE_TYPE_SKILLS[t] ?? []),
+    ...pastRoles.flatMap((r) => FUNCTION_SKILLS[r] ?? []),
+  ])
   const required = FUNCTION_SKILLS[func] ?? []
+  const matched = required.filter((skill) => have.has(skill) || skillKeywordMatches(skill, skillKeywords))
   return {
-    matched: required.filter((skill) => have.has(skill)),
-    toDevelop: required.filter((skill) => !have.has(skill)),
+    matched,
+    toDevelop: required.filter((skill) => !matched.includes(skill)),
     certification: FUNCTION_CERTIFICATIONS[func] ?? null,
   }
 }

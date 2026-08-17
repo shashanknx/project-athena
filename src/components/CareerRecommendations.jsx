@@ -85,6 +85,11 @@ export default function CareerRecommendations({ answers, onEdit }) {
               Based on {answers.industries.join(', ')} · {answers.functions.join(', ')} ·{' '}
               {answers.level.toLowerCase()}.
             </p>
+            {answers.pastIndustries.length ? (
+              <p className="mt-1 max-w-2xl text-xs text-slate-400">
+                Also noted: previous experience in {answers.pastIndustries.join(', ')}.
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -141,6 +146,12 @@ export default function CareerRecommendations({ answers, onEdit }) {
           <p className="mt-1 max-w-2xl text-sm text-slate-500">
             Typical guidance per role type, not a per-listing requirements match — see instructions.md
             for how this is derived.
+          </p>
+          <p className="mt-1 max-w-2xl text-xs text-slate-400">
+            Drawing on: {[...answers.degrees.filter((d) => d !== 'Other'), answers.degreeOther].filter(Boolean).join(', ') || 'no degree background'}
+            {answers.experienceTypes.length ? ` · ${answers.experienceTypes.join(', ')}` : ''}
+            {answers.pastRoles.length ? ` · past roles in ${answers.pastRoles.join(', ')}` : ''}
+            {answers.skillKeywords.length ? ` · keywords: ${answers.skillKeywords.join(', ')}` : ''}
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {representedFunctions.map((func) => (

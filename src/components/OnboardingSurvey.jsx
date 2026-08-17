@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { INDUSTRIES, FUNCTIONS } from '../data/mockCompanies.js'
-import { AGE_RANGES, DEGREE_BACKGROUNDS, EXPERIENCE_LEVELS, TARGET_LEVELS } from '../data/careerGuidance.js'
+import { AGE_RANGES, DEGREE_BACKGROUNDS, EXPERIENCE_TYPES, TARGET_LEVELS } from '../data/careerGuidance.js'
 
 /*
  * First-visit survey: who the user is, and what they're looking for. Feeds
@@ -12,8 +12,12 @@ import { AGE_RANGES, DEGREE_BACKGROUNDS, EXPERIENCE_LEVELS, TARGET_LEVELS } from
 
 export const EMPTY_SURVEY = {
   age: '',
-  degree: '',
-  experience: '',
+  degrees: [],
+  degreeOther: '',
+  experienceTypes: [],
+  pastRoles: [],
+  pastIndustries: [],
+  skillKeywords: [],
   industries: [],
   functions: [],
   level: '',
@@ -59,10 +63,11 @@ function ToggleChip({ active, children, onClick }) {
   )
 }
 
-function MultiSelectRow({ label, options, selected, onToggle }) {
+function MultiSelectRow({ label, hint, options, selected, onToggle }) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-sm font-medium text-slate-700">{label}</span>
+      {hint ? <p className="-mt-1 text-xs text-slate-500">{hint}</p> : null}
       <div className="flex flex-wrap gap-1.5">
         {options.map((o) => (
           <ToggleChip key={o} active={selected.includes(o)} onClick={() => onToggle(o)}>
@@ -70,6 +75,100 @@ function MultiSelectRow({ label, options, selected, onToggle }) {
           </ToggleChip>
         ))}
       </div>
+    </div>
+  )
+}
+
+const OTHER = 'Other'
+
+function DegreeRow({ selected, other, onToggle, onOtherChange }) {
+  const otherActive = selected.includes(OTHER)
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-sm font-medium text-slate-700">Degree background</span>
+      <p className="-mt-1 text-xs text-slate-500">Pick as many as apply.</p>
+      <div className="flex flex-wrap gap-1.5">
+        {DEGREE_BACKGROUNDS.map((o) => (
+          <ToggleChip key={o} active={selected.includes(o)} onClick={() => onToggle(o)}>
+            {o}
+          </ToggleChip>
+        ))}
+        <ToggleChip active={otherActive} onClick={() => onToggle(OTHER)}>
+          {OTHER}
+        </ToggleChip>
+      </div>
+      {otherActive ? (
+        <input
+          type="text"
+          value={other}
+          onChange={(e) => onOtherChange(e.target.value)}
+          placeholder="Tell us your background"
+          aria-label="Other degree background"
+          className="mt-1 rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+        />
+      ) : null}
+    </div>
+  )
+}
+
+function KeywordInput({ label, hint, values, onAdd, onRemove }) {
+  const [draft, setDraft] = useState('')
+
+  function commit() {
+    const trimmed = draft.trim()
+    if (trimmed && !values.includes(trimmed)) onAdd(trimmed)
+    setDraft('')
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor="survey-skills" className="text-sm font-medium text-slate-700">
+        {label}
+      </label>
+      {hint ? <p className="-mt-1 text-xs text-slate-500">{hint}</p> : null}
+      <div className="flex gap-2">
+        <input
+          id="survey-skills"
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+              e.preventDefault()
+              commit()
+            }
+          }}
+          placeholder="e.g. Excel, Python, public speaking"
+          className="flex-1 rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={commit}
+          className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+        >
+          Add
+        </button>
+      </div>
+      {values.length ? (
+        <div className="flex flex-wrap gap-1.5">
+          {values.map((v) => (
+            <span
+              key={v}
+              className="flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-sm text-slate-700"
+            >
+              {v}
+              <button
+                type="button"
+                onClick={() => onRemove(v)}
+                aria-label={`Remove ${v}`}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -87,10 +186,27 @@ export default function OnboardingSurvey({ initial, onSubmit, onSkip }) {
     }))
   }
 
+  function addKeyword(value) {
+    setAnswers((prev) => ({ ...prev, skillKeywords: [...prev.skillKeywords, value] }))
+  }
+
+  function removeKeyword(value) {
+    setAnswers((prev) => ({ ...prev, skillKeywords: prev.skillKeywords.filter((v) => v !== value) }))
+  }
+
   function handleSubmit(e) {
     e.preventDefault()
-    if (!answers.age || !answers.degree || !answers.experience || !answers.level) {
-      setError('Fill in age range, degree background, experience, and target level — they only take a click each.')
+    if (!answers.age || !answers.level) {
+      setError('Fill in age range and target level — they only take a click each.')
+      return
+    }
+    const hasDegree = answers.degrees.some((d) => d !== OTHER) || (answers.degrees.includes(OTHER) && answers.degreeOther.trim())
+    if (!hasDegree) {
+      setError(
+        answers.degrees.includes(OTHER)
+          ? 'Say a word or two about your background in the "Other" box, or pick a listed degree.'
+          : 'Pick at least one degree background, or choose "Other" and describe it.',
+      )
       return
     }
     if (answers.industries.length === 0 || answers.functions.length === 0) {
@@ -112,28 +228,60 @@ export default function OnboardingSurvey({ initial, onSubmit, onSkip }) {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Select id="survey-age" label="Age range" value={answers.age} onChange={set('age')} options={AGE_RANGES} />
-          <Select
-            id="survey-degree"
-            label="Degree background"
-            value={answers.degree}
-            onChange={set('degree')}
-            options={DEGREE_BACKGROUNDS}
-          />
-          <Select
-            id="survey-experience"
-            label="Internship / work experience"
-            value={answers.experience}
-            onChange={set('experience')}
-            options={EXPERIENCE_LEVELS}
-          />
           <Select
             id="survey-level"
             label="Level you're targeting"
             value={answers.level}
             onChange={set('level')}
             options={TARGET_LEVELS}
+          />
+        </div>
+
+        <div className="mt-5 border-t border-slate-200 pt-4">
+          <DegreeRow
+            selected={answers.degrees}
+            other={answers.degreeOther}
+            onToggle={(v) => toggleMulti('degrees', v)}
+            onOtherChange={set('degreeOther')}
+          />
+        </div>
+
+        <div className="mt-5 grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2">
+          <MultiSelectRow
+            label="Work experience so far"
+            hint="Pick every type that applies — it's fine to pick none."
+            options={EXPERIENCE_TYPES}
+            selected={answers.experienceTypes}
+            onToggle={(v) => toggleMulti('experienceTypes', v)}
+          />
+          <MultiSelectRow
+            label="Past roles you've held"
+            hint="Functions you've actually worked in before, if any."
+            options={FUNCTIONS}
+            selected={answers.pastRoles}
+            onToggle={(v) => toggleMulti('pastRoles', v)}
+          />
+        </div>
+
+        <div className="mt-5 border-t border-slate-200 pt-4">
+          <MultiSelectRow
+            label="Past industries you've worked in"
+            hint="Optional — leave blank if this would be your first."
+            options={INDUSTRIES}
+            selected={answers.pastIndustries}
+            onToggle={(v) => toggleMulti('pastIndustries', v)}
+          />
+        </div>
+
+        <div className="mt-5 border-t border-slate-200 pt-4">
+          <KeywordInput
+            label="Skills"
+            hint="Type a skill and press Enter to add it — tools, languages, anything you'd put on a resume."
+            values={answers.skillKeywords}
+            onAdd={addKeyword}
+            onRemove={removeKeyword}
           />
         </div>
 

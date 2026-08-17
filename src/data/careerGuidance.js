@@ -15,21 +15,19 @@
 
 export const AGE_RANGES = ['Under 18', '18-24', '25-34', '35-44', '45-54', '55+']
 
+// Checkbox list — a survey-taker can hold more than one. "Other" is handled
+// in OnboardingSurvey.jsx as an extra toggle with a free-text field; it isn't
+// in this array because free text can't be looked up in DEGREE_SKILLS below.
 export const DEGREE_BACKGROUNDS = [
   'Business / Economics',
   'Engineering / Computer Science',
   'Life Sciences',
   'Liberal Arts / Humanities',
-  'Other / Undecided',
 ]
 
-export const EXPERIENCE_LEVELS = [
-  'No internships or jobs yet',
-  '1 internship',
-  '2+ internships',
-  'Full-time experience (1-3 yrs)',
-  'Full-time experience (3+ yrs)',
-]
+// Also a checkbox list — internship, part-time, and full-time aren't
+// mutually exclusive over a person's history.
+export const EXPERIENCE_TYPES = ['Internship', 'Part-time work', 'Full-time work']
 
 // Same three tiers inferLevel() in lib/recommend.js buckets real role titles
 // into, so a survey answer here can be matched directly against a role.
@@ -61,21 +59,22 @@ const SKILL = {
 }
 
 // What a survey-taker's degree background typically already gives them.
+// A survey-taker can hold several degrees; the app unions across all of them.
+// A custom "Other" answer contributes nothing here on purpose — there's no
+// honest way to infer skills from free text, so it doesn't try.
 export const DEGREE_SKILLS = {
   'Business / Economics': [SKILL.FINANCIAL_MODELING, SKILL.FORECASTING, SKILL.MARKET_RESEARCH],
   'Engineering / Computer Science': [SKILL.TECHNICAL_SCRIPTING, SKILL.SYSTEMS_DESIGN, SKILL.DATA_ANALYSIS],
   'Life Sciences': [SKILL.REGULATORY, SKILL.DATA_ANALYSIS],
   'Liberal Arts / Humanities': [SKILL.MESSAGING, SKILL.CROSS_FUNCTIONAL],
-  'Other / Undecided': [],
 }
 
-// What work/internship history typically adds on top of a degree.
-export const EXPERIENCE_SKILLS = {
-  'No internships or jobs yet': [],
-  '1 internship': [SKILL.WORKPLACE_BASICS],
-  '2+ internships': [SKILL.WORKPLACE_BASICS, SKILL.CROSS_FUNCTIONAL],
-  'Full-time experience (1-3 yrs)': [SKILL.WORKPLACE_BASICS, SKILL.OWNERSHIP],
-  'Full-time experience (3+ yrs)': [SKILL.WORKPLACE_BASICS, SKILL.OWNERSHIP, SKILL.LEADERSHIP],
+// What each kind of work history typically adds, unioned across every type
+// the survey-taker checks off.
+export const EXPERIENCE_TYPE_SKILLS = {
+  Internship: [SKILL.WORKPLACE_BASICS],
+  'Part-time work': [SKILL.WORKPLACE_BASICS],
+  'Full-time work': [SKILL.WORKPLACE_BASICS, SKILL.OWNERSHIP, SKILL.LEADERSHIP],
 }
 
 // What each function's roles typically call for, in this dataset.
@@ -89,6 +88,28 @@ export const FUNCTION_SKILLS = {
   People: [SKILL.RECRUITING, SKILL.CROSS_FUNCTIONAL],
   Product: [SKILL.ROADMAP, SKILL.CROSS_FUNCTIONAL, SKILL.MARKET_RESEARCH],
   Sales: [SKILL.PIPELINE],
+}
+
+// Real-world words a survey-taker might type into the free-text skills box,
+// mapped to the canonical tag they should count as evidence for. Illustrative
+// and short on purpose — see skillKeywordMatches() in lib/recommend.js for
+// how a typed keyword gets checked against this.
+export const SKILL_KEYWORD_SYNONYMS = {
+  [SKILL.FINANCIAL_MODELING]: ['excel', 'financial model', 'dcf', 'valuation'],
+  [SKILL.FORECASTING]: ['budget', 'forecast', 'planning'],
+  [SKILL.DATA_ANALYSIS]: ['excel', 'sql', 'data analysis', 'spreadsheet', 'tableau'],
+  [SKILL.TECHNICAL_SCRIPTING]: ['python', 'javascript', 'coding', 'programming', 'java', 'c++'],
+  [SKILL.SYSTEMS_DESIGN]: ['systems design', 'architecture', 'cad', 'engineering design'],
+  [SKILL.REGULATORY]: ['compliance', 'regulatory', 'legal research', 'contracts'],
+  [SKILL.MESSAGING]: ['copywriting', 'branding', 'positioning', 'content'],
+  [SKILL.MARKET_RESEARCH]: ['market research', 'surveys', 'user research', 'analytics'],
+  [SKILL.PROCESS_COORDINATION]: ['logistics', 'supply chain', 'vendor management', 'process improvement'],
+  [SKILL.RECRUITING]: ['recruiting', 'hiring', 'sourcing', 'hr'],
+  [SKILL.ROADMAP]: ['roadmapping', 'prioritization', 'product strategy', 'agile', 'scrum'],
+  [SKILL.CROSS_FUNCTIONAL]: ['communication', 'teamwork', 'collaboration', 'presentations'],
+  [SKILL.PIPELINE]: ['sales', 'crm', 'negotiation', 'salesforce'],
+  [SKILL.OWNERSHIP]: ['project management', 'ownership'],
+  [SKILL.LEADERSHIP]: ['leadership', 'management', 'team lead'],
 }
 
 // Certifications are a function thing, not an industry thing, in this
