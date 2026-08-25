@@ -116,7 +116,8 @@ export default function LandingPage() {
             <WaitlistForm />
           </div>
           <p className="mt-4 text-xs text-slate-400">
-            This is a prototype for user testing — no email is sent or stored beyond this browser.
+            Project Athena is an early-stage prototype — we'll only use your email to follow up
+            about it.
           </p>
         </div>
       </section>

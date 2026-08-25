@@ -89,7 +89,7 @@ anything else on the page, links to `#/internal`.
 **Home.** A headline and subhead, three value-prop cards, and a *Join the
 waitlist* button that scrolls to Sign Up. The headline is one of four
 positioning variants in `src/data/landingCopy.js` (`HEADLINES`), picked by a
-`?headline=N` query param (0–3), defaulting to 0 — hand a tester
+`?headline=N` query param (0–4), defaulting to 0 — hand a tester
 `?headline=2` to show them a different pitch without a rebuild. This is not a
 real experimentation platform: nothing is tracked, it just changes which copy
 renders.
@@ -103,14 +103,32 @@ redesign of the product — if you restyle a screen, update its mini
 reproduction here too, or the two will visibly disagree.
 
 **Sign Up.** An email field and *Join waitlist* button
-(`src/components/landing/WaitlistForm.jsx`). This is a stub, and says so in
-its own UI, not just here: there is no backend, so a submission is validated
-client-side and written to this browser's `localStorage`
-(`projectAthena.waitlistEmails`) only. Nothing is sent anywhere, no one else
-can see it, and it does not survive a different browser or a cleared profile.
-A real visitor could reasonably read "join waitlist" as a promise of
-follow-up — that's why the disclaimer is in the page itself, not buried in
-this file.
+(`src/components/landing/WaitlistForm.jsx`). A submission is validated
+client-side, then POSTed directly to a Google Form's response endpoint
+(`GOOGLE_FORM_ACTION` / `GOOGLE_FORM_EMAIL_ENTRY` in that file) — the visitor
+never sees Google's own form UI, only this page's styling; the answers land in
+that Form's linked Google Sheet. There is still no app backend of ours: this
+is a client-side POST straight to Google, not a server we run.
+
+Two things worth knowing about that technique specifically:
+
+- **Success can't be verified.** Google's endpoint doesn't return
+  CORS headers, so the fetch is made in `no-cors` mode and the response is
+  opaque — the code can tell a request *failed to send* (network error,
+  offline) and shows an error for that, but a "sent successfully" state
+  means only that the browser dispatched the request, not that Google
+  accepted it. This is a structural limit of posting to Google Forms from
+  client-side JS, not something more code can fix.
+- **Replacing the form.** If the Google Form ever needs to change, open the
+  new form, find its hidden `<input type="hidden" name="entry.NNNNNN">`
+  (view page source, or `document.querySelectorAll('input')` in devtools) —
+  that name is `GOOGLE_FORM_EMAIL_ENTRY`, and the form's own `action`
+  attribute (ending in `/formResponse`) is `GOOGLE_FORM_ACTION`.
+
+A per-browser `localStorage` flag (`projectAthena.waitlistSubmittedEmail`) is
+kept purely so a returning visitor who already joined sees the confirmation
+again instead of an empty form — it is not the record of who signed up
+anymore; the Google Sheet is.
 
 ## 3. The map (primary view)
 
@@ -381,12 +399,14 @@ through yourself; the "verified" notes say what the expected result is.
       the product; editing the hash back to empty returns to the landing page
       without a full reload, and the tab title changes between "Project
       Athena" and "Project Athena — Internal" accordingly.*
-- [ ] **16. The waitlist form validates, confirms, and does not silently
+- [ ] **16. The waitlist form validates, submits, and does not silently
       fail.** Submit with an invalid email, then a valid one. *Verified: an
-      invalid address shows an inline error and does not submit; a valid one
-      shows a confirmation message and is written to this browser's
-      `localStorage` — check via devtools, key `projectAthena.waitlistEmails`.
-      Nothing is sent over the network; there is no backend to send it to.*
+      invalid address shows an inline error and never fires a request
+      (checked via `performance.getEntriesByType('resource')`, not just the
+      UI); a valid one shows a confirmation message and a real POST to
+      `docs.google.com/.../formResponse` is dispatched — confirmed the same
+      way, with a non-zero round-trip duration. A dropped connection (e.g.
+      offline) shows a distinct error instead of falsely claiming success.*
 
 ---
 
@@ -492,11 +512,14 @@ These are deliberate. Please do not file them as bugs.
   bundle (this is a public repo and a public static site), can reach the full
   product. If real access control ever matters, this needs actual auth and a
   non-static backend; that is a materially bigger change than this prototype.
-- **The waitlist is a local-only stub.** Emails are validated and written to
-  `localStorage` in the submitter's own browser and go nowhere else — not to
-  a spreadsheet, not to an inbox, not to any team member. If this page starts
-  collecting real interest, wire the form to an actual destination before
-  relying on it.
+- **The waitlist submits to a real Google Form/Sheet, but success can't be
+  verified client-side.** Google's response endpoint gives no CORS headers,
+  so the request is fired in `no-cors` mode: a network failure (offline) is
+  caught and shown as an error, but a request that leaves the browser
+  successfully always shows the confirmation, whether or not Google actually
+  accepted it. Check the linked Sheet directly if you need certainty that a
+  specific submission landed. There is also no dedup — resubmitting the same
+  email creates another row.
 - **The four "How it works" previews are hand-built reproductions, not
   screenshots**, and will silently drift from the real screens if those are
   redesigned without a matching update to `PreviewMockups.jsx`.

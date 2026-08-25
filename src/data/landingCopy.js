@@ -11,7 +11,7 @@
 
 export const HEADLINES = [
   {
-    headline: 'Shape your career strategy.',
+    headline: 'Your personalized map of the job market',
     subhead:
       'Test whether the job you want actually exists — before you spend months chasing it.',
   },
@@ -29,20 +29,25 @@ export const HEADLINES = [
     headline: 'Your career, workshopped.',
     subhead: 'Define a thesis. See what is real. Find the roles worth pursuing.',
   },
+  {
+    headline: 'Know your next move.',
+    subhead:
+      'Get personalized job and career recommendations based on your skills, experience, and goals.',
+  },
 ]
 
 export const VALUE_PROPS = [
   {
-    title: 'Test a thesis, not a hope',
-    body: 'State the function, industry, and city you are targeting. Find out immediately whether that exact combination exists in the market — not just whether jobs exist somewhere.',
+    title: 'Search less.',
+    body: 'Find the right opportunities faster.',
   },
   {
-    title: 'See what is actually blocking you',
-    body: 'If your thesis comes up empty, the diagnostic shows which single constraint is unrealistic — the city, the industry, or the title — instead of leaving you to guess.',
+    title: 'Discover what others miss.',
+    body: 'Uncover hidden-gem roles beyond the obvious companies.',
   },
   {
-    title: 'Screen for fit, not just headcount',
-    body: 'A healthy market does not mean the jobs are any good. Read real postings and mark them hit or miss — market size and fit are tracked as two separate numbers, never one.',
+    title: 'See the market clearly.',
+    body: 'Understand where the opportunities are — and where you fit.',
   },
 ]
 
