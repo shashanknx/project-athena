@@ -137,14 +137,14 @@ export function TrackerPreview() {
             <td className="py-1 text-slate-900">Helix Bio</td>
             <td className="py-1 text-slate-600">Product Manager</td>
             <td className="py-1">
-              <Pill active>warm intro sought</Pill>
+              <Pill active>Interested</Pill>
             </td>
           </tr>
           <tr>
             <td className="py-1 text-slate-900">Calyx Therapeutics</td>
             <td className="py-1 text-slate-600">Sr. Product Manager</td>
             <td className="py-1">
-              <Pill>researching</Pill>
+              <Pill>Applied</Pill>
             </td>
           </tr>
         </tbody>
