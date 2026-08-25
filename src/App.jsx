@@ -5,6 +5,7 @@ import ThesisAnalysis from './components/ThesisAnalysis.jsx'
 import Tracker from './components/Tracker.jsx'
 import OnboardingSurvey, { EMPTY_SURVEY } from './components/OnboardingSurvey.jsx'
 import CareerRecommendations from './components/CareerRecommendations.jsx'
+import IndustryHeatmap from './components/IndustryHeatmap.jsx'
 import { EMPTY_THESIS, isEmptyThesis } from './lib/search.js'
 import { STATUSES } from './lib/tracker.js'
 
@@ -231,6 +232,17 @@ export default function App() {
             </button>
             <button
               type="button"
+              onClick={() => setView('heatmap')}
+              className={`rounded px-3 py-1.5 text-sm font-medium ${
+                view === 'heatmap'
+                  ? 'bg-slate-900 text-white'
+                  : 'border border-slate-300 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Heatmap
+            </button>
+            <button
+              type="button"
               onClick={() => setView('tracker')}
               className={`rounded px-3 py-1.5 text-sm font-medium ${
                 view === 'tracker'
@@ -310,6 +322,8 @@ export default function App() {
             )}
           </>
         ) : null}
+
+        {view === 'heatmap' ? <IndustryHeatmap /> : null}
 
         {view === 'tracker' ? (
           <Tracker
