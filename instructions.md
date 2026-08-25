@@ -1,9 +1,10 @@
-# Thesis Tester — testing instructions
+# Project Athena — testing instructions
 
-A wireframe prototype of a career thesis-testing tool. A user states a **thesis**
-(the kind of role and company they think they are targeting); the tool tells them
-whether that thesis exists in the job market, **which specific part of it is
-unrealistic**, and then lets them screen the actual results for fit.
+Project Athena is a wireframe prototype of a career thesis-testing tool. A user
+states a **thesis** (the kind of role and company they think they are
+targeting); the tool tells them whether that thesis exists in the job market,
+**which specific part of it is unrealistic**, and then lets them screen the
+actual results for fit.
 
 The diagnostic is the product. Two numbers are kept deliberately separate and are
 never combined:
@@ -13,20 +14,38 @@ never combined:
 | **Market hit rate** | Does this thesis exist at all? | Computed from the dataset | Section 1, blue |
 | **Fit hit rate** | Of the jobs that exist, are any actually right? | The user, role by role | Section 2, amber |
 
-There are two ways in. **The map** is the primary view and the landing screen:
-browse everything that exists with no thesis required, then test any thesis
-inline without leaving the page. **The standalone tester** is secondary, reached
-from *Start from scratch*, for building a thesis that does not begin with a
-company you are already looking at.
+**The public URL is a landing page, not the product.** Anyone hitting
+https://shashanknx.github.io/project-athena/ gets a marketing page (value prop,
+how-it-works previews, an email waitlist) — nothing about the map, the survey,
+or the tracker is linked from it. The actual product is mounted at an unlisted
+URL, `.../project-athena/#/internal`, which only the team should have.
 
-All job data is mock. There is no live job API, no network lookup, no account.
+**This is not real access control.** The site is static and public, with no
+backend and no auth. The `#/internal` route is unlinked, not gated — anyone who
+has the URL, or who opens devtools and reads the shipped JavaScript, can reach
+it. Treat it as "not advertised," not "protected." See §2 for the landing page
+itself and §3 onward for the product it hides.
+
+Once inside the product, there are two ways to test a thesis. **The map** is the
+primary view: browse everything that exists with no thesis required, then test
+any thesis inline without leaving the page. **The standalone tester** is
+secondary, reached from *Start from scratch*, for building a thesis that does
+not begin with a company you are already looking at.
+
+All job data is mock. There is no live job API, no network lookup, no real
+account system.
 
 ---
 
 ## 1. Running it
 
-Deployed for testing: **https://shashanknx.github.io/project-athena/**
-(rebuilt automatically on every push to `main`).
+Deployed for testing:
+
+- **Public landing page:** https://shashanknx.github.io/project-athena/
+- **Product (team only, unlisted):** https://shashanknx.github.io/project-athena/#/internal
+
+Both are the same static deploy, rebuilt automatically on every push to `main`;
+the hash after `#` is what switches between them, entirely in the browser.
 
 To run locally, Node 20+ (built and tested on Node 26, npm 11).
 
@@ -38,7 +57,8 @@ npm install
 npm run dev
 ```
 
-Then open the URL Vite prints (http://localhost:5173 by default).
+Then open the URL Vite prints (http://localhost:5173 by default) for the
+landing page, or append `#/internal` to it for the product.
 
 Other commands:
 
@@ -57,7 +77,42 @@ npm run build
 
 ---
 
-## 2. The map (primary view)
+## 2. The landing page (public root)
+
+What a real visitor sees at the bare project URL. One page, three anchor-linked
+sections, no build step beyond the same static bundle as the product.
+
+**Nav.** *Home*, *How It Works*, *Sign Up* — plain same-page anchors
+(`#home`, `#how-it-works`, `#sign-up`), not route changes. None of them, or
+anything else on the page, links to `#/internal`.
+
+**Home.** A headline and subhead, three value-prop cards, and a *Join the
+waitlist* button that scrolls to Sign Up. The headline is one of four
+positioning variants in `src/data/landingCopy.js` (`HEADLINES`), picked by a
+`?headline=N` query param (0–3), defaulting to 0 — hand a tester
+`?headline=2` to show them a different pitch without a rebuild. This is not a
+real experimentation platform: nothing is tracked, it just changes which copy
+renders.
+
+**How It Works.** Four static preview cards — Survey, Map, Job Listings,
+Tracker — each a small hand-built reproduction of the real screen's layout and
+colour language (`src/components/landing/PreviewMockups.jsx`), framed to look
+like a browser window. **These are not live screenshots.** They cannot go
+stale as a binary asset, but they also will not automatically reflect a real
+redesign of the product — if you restyle a screen, update its mini
+reproduction here too, or the two will visibly disagree.
+
+**Sign Up.** An email field and *Join waitlist* button
+(`src/components/landing/WaitlistForm.jsx`). This is a stub, and says so in
+its own UI, not just here: there is no backend, so a submission is validated
+client-side and written to this browser's `localStorage`
+(`projectAthena.waitlistEmails`) only. Nothing is sent anywhere, no one else
+can see it, and it does not survive a different browser or a cleared profile.
+A real visitor could reasonably read "join waitlist" as a promise of
+follow-up — that's why the disclaimer is in the page itself, not buried in
+this file.
+
+## 3. The map (primary view)
 
 The map is a read-only view of the same dataset the tester runs on. It does no
 matching, scores no thesis, and computes no hit rates — the numbers on it are
@@ -106,14 +161,16 @@ primary nav item. *← Back to the map* returns you.
 
 ---
 
-## 3. Walkthrough: map to tracker
+## 4. Walkthrough: map to tracker
 
 The primary flow, start to finish. Do not reload the page partway through.
+Start at the product URL, `.../project-athena/#/internal`, not the public
+landing page.
 
 **Part A — browse, and notice a gap**
 
-1. Open the app. You land on the map: 40 companies, 81 open roles, grouped by
-   industry.
+1. Open `.../project-athena/#/internal`. You land on the map: 40 companies,
+   81 open roles, grouped by industry.
 2. Click the **Robotics** industry chip. The map narrows to 9 companies / 19
    open roles.
 3. Look at the function row now. **BizOps 8**, Engineering 1, Marketing 1,
@@ -163,7 +220,7 @@ The primary flow, start to finish. Do not reload the page partway through.
 
 ---
 
-## 4. Test scenarios
+## 5. Test scenarios
 
 These six exercise the diagnostic's edge cases. Enter them in the **standalone
 tester** (*Start from scratch* on the map), since they need field combinations
@@ -188,7 +245,7 @@ matches against city names in the dataset.
 
 ---
 
-## 5. Walkthrough: the standalone tester
+## 6. Walkthrough: the standalone tester
 
 The secondary flow, for a user who starts from a thesis rather than from a
 company. Open it with *Start from scratch* on the map. One continuous session,
@@ -253,7 +310,7 @@ through.
 
 ---
 
-## 6. QA checklist
+## 7. QA checklist
 
 Every item below was verified in the browser on the build in this repo. Tick them
 through yourself; the "verified" notes say what the expected result is.
@@ -313,10 +370,27 @@ through yourself; the "verified" notes say what the expected result is.
       inside a map panel appears in the tracker, and navigating between map,
       tester, and tracker, or collapsing the panel it was logged from, leaves it
       intact.*
+- [ ] **14. The public root shows only the landing page — never the product.**
+      Load the bare URL fresh (no hash, private/incognito window). *Verified:
+      the landing page renders, and nothing in its DOM — no link, no button —
+      references `#/internal`. Inspect the page source if you want to confirm
+      by hand rather than trust this.*
+- [ ] **15. The hidden route works, both by direct load and by navigating to
+      it.** Load `.../#/internal` fresh, and separately, load the bare URL then
+      manually edit the hash in the address bar. *Verified: both paths land on
+      the product; editing the hash back to empty returns to the landing page
+      without a full reload, and the tab title changes between "Project
+      Athena" and "Project Athena — Internal" accordingly.*
+- [ ] **16. The waitlist form validates, confirms, and does not silently
+      fail.** Submit with an invalid email, then a valid one. *Verified: an
+      invalid address shows an inline error and does not submit; a valid one
+      shows a confirmation message and is written to this browser's
+      `localStorage` — check via devtools, key `projectAthena.waitlistEmails`.
+      Nothing is sent over the network; there is no backend to send it to.*
 
 ---
 
-## 7. Known limitations and stubs
+## 8. Known limitations and stubs
 
 These are deliberate. Please do not file them as bugs.
 
@@ -410,6 +484,26 @@ These are deliberate. Please do not file them as bugs.
 - **Age range is collected but never used to filter or recommend anything.**
   It is on the survey because it was asked for; there is no legitimate basis
   in this dataset to make age drive a career recommendation, so it does not.
+
+**The landing page**
+
+- **`#/internal` is unlisted, not secured.** No login, no token, no
+  server-side check — anyone with the URL, or anyone who reads the shipped JS
+  bundle (this is a public repo and a public static site), can reach the full
+  product. If real access control ever matters, this needs actual auth and a
+  non-static backend; that is a materially bigger change than this prototype.
+- **The waitlist is a local-only stub.** Emails are validated and written to
+  `localStorage` in the submitter's own browser and go nowhere else — not to
+  a spreadsheet, not to an inbox, not to any team member. If this page starts
+  collecting real interest, wire the form to an actual destination before
+  relying on it.
+- **The four "How it works" previews are hand-built reproductions, not
+  screenshots**, and will silently drift from the real screens if those are
+  redesigned without a matching update to `PreviewMockups.jsx`.
+- **Headline variants are not tracked.** `?headline=N` changes what a visitor
+  sees but nothing records which variant they got or what they did next — you
+  would need to add real analytics to learn anything from handing out
+  different links.
 
 **Small things noticed and left alone**
 

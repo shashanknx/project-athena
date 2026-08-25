@@ -1,8 +1,14 @@
-# Thesis Tester
+# Project Athena
 
 A wireframe prototype of a career thesis-testing tool, built for user testing.
 
-**Live: https://shashanknx.github.io/project-athena/**
+**Public landing page: https://shashanknx.github.io/project-athena/**
+**Product (team only, unlisted): https://shashanknx.github.io/project-athena/#/internal**
+
+Same static deploy; the hash after `#` switches between them client-side, so
+both work with zero server config. The `#/internal` route is unlinked from the
+landing page but is not access-controlled — see instructions.md before
+treating it as anything more than "not advertised."
 
 You state a **thesis** — the kind of role and company you think you are targeting
 ("Marketing, Space, Denver") — and the tool tells you whether that thesis exists
@@ -44,6 +50,15 @@ checklist, and the list of stubbed areas.
 
 ```
 src/
+  App.jsx                    Root router only: bare URL → LandingPage, #/internal
+                             → FullApp. Nothing else lives here.
+  FullApp.jsx                The actual product (map, tester, tracker, survey,
+                              heat map) — what used to be App.jsx.
+  components/landing/        The public marketing page: LandingPage.jsx,
+                             WaitlistForm.jsx (localStorage stub), and
+                             PreviewMockups.jsx (hand-built screen previews).
+  data/landingCopy.js        Headline variants and section copy for the landing
+                             page, kept out of JSX so they're easy to swap.
   data/mockCompanies.js      40 fictional companies, 81 roles. Hand-built so each
                              test scenario is reachable; the scenario map is in
                              the header comment.
